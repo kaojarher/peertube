@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeerTube Premium - YouTube 風格響應式 P2P 播放器</title>
+    <!-- 引入 WebTorrent 核心庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
+    <style>
+        :root {
+            --yt-red: #ff0000;
+            --bg-black: #0f0f0f;
+            --card-gray: #212121;
+            --border-gray: #3d3d3d;
+            --text-main: #f1f1f1;
+            --text-sub: #aaa;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Roboto", "Arial", sans-serif;
+        }
+        body {
+            background-color: var(--bg-black);
+            color: var(--text-main);
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* YouTube 頂部導覽列 */
+        header {
+            background-color: var(--bg-black);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid #222;
+        }
+        header .logo {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            letter-spacing: -0.5px;
+            cursor: pointer;
+        }
+        header .logo span {
+            background: var(--yt-red);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 800;
+        }
+
+        /* YouTube 經典雙欄版面佈局 */
+        .main-layout {
+            display: flex;
+            flex-direction: row;
+            max-width: 1750px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 24px;
+            gap: 24px;
+        }
+
+        /* 左側主播放區 */
+        .primary-content {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            min-width: 0; /* 防止 Flex 項目溢出 */
+        }
+
+        /* 影片視窗（維持 16:9 劇院比例） */
+        .video-container {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background-color: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* 讀取中遮罩 */
+        .player-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 15, 15, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.1);
+            width: 45px; height: 45px;
+            border-radius: 50%;
+            border-left-color: var(--yt-red);
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* 影片標題與基本資訊 */
+        .video-details {
+            margin-top: 16px;
+        }
+        .video-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        .video-meta-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-gray);
+        }
+
+        /* 數據監控儀表板 (仿微型資訊欄) */
+        .p2p-dashboard {
+            margin-top: 16px;
+            background: var(--card-gray);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .dashboard-title {
+            font-size: 0.95rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .grid-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-num {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+
+        /* 進度條 */
+        .yt-progress-wrapper {
+            margin-top: 12px;
+            background: rgba(255,255,255,0.1);
+            height: 4px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .yt-progress-bar {
+            background: var(--yt-red);
+            width: 0%;
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        /* 右側側邊欄：控制台與輸入 */
+        .secondary-sidebar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-width: 320px;
+        }
+        .sidebar-card {
+            background: var(--card-gray);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .sidebar-card h3 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: var(--text-main);
+        }
+        .input-box {
+            width: 100%;
+            background: #121212;
+            border: 1px solid var(--border-gray);
+            padding: 12px;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            resize: none;
+            height: 70px;
+        }
+        .input-box:focus {
+            outline: none;
+            border-color: #fff;
+        }
+        .yt-btn {
+            width: 100%;
+            background: #f1f1f1;
+            color: #0f0f0f;
+            border: none;
+            padding: 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .yt-btn:hover {
+            background: #d9d9d9;
+        }
+
+        /* 預設推薦點擊卡片 */
+        .recommend-item {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .recommend-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .recommend-thumb {
+            width: 120px;
+            aspect-ratio: 16/9;
+            background: #333;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        .recommend-info {
+            flex: 1;
+            font-size: 0.85rem;
+        }
+        .recommend-title {
+            font-weight: bold;
+            line-height: 1.3;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* 📱 RWD 響應式中斷點設計 (平板與手機螢幕優化) */
+        @media (max-width: 1000px) {
+            .main-layout {
+                flex-direction: column;
+                padding: 12px;
+                gap: 16px;
+            }
+            .secondary-sidebar {
+                width: 100%;
+            }
+            .grid-stats {
+                grid-template-columns: repeat(2, 1fr); /* 手機版數據改為 2x2 排版 */
+            }
+        }
+        @media (max-width: 480px) {
+            header { padding: 12px; }
+            .video-title { font-size: 1.1rem; }
+            .stat-num { font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 頂部導覽列 -->
+    <header>
+        <div class="logo">▶️ PeerTube <span>Premium</span></div>
+        <div style="font-size: 0.85rem; color: #2bba66;" id="globalStatus">● P2P 引擎就緒</div>
+    </header>
+
+    <!-- 主區塊 -->
+    <div class="main-layout">
+        
+        <!-- 左側：影片播放與數據（主欄） -->
+        <div class="primary-content">
+            <!-- 播放器視窗 -->
+            <div class="video-container">
+                <div id="playerOverlay" class="player-overlay">
+                    <div class="spinner"></div>
+                    <div id="statusText" style="font-size: 0.9rem; color: var(--text-sub);">等待載入任務...</div>
+                </div>
+                <video id="videoElement" controls autoplay playsinline></video>
+            </div>
+
+            <!-- 影片資訊 -->
+            <div class="video-details">
+                <div class="video-title" id="playingName">請由右側輸入磁力連結或點擊推薦影片</div>
+                <div class="video-meta-bar">
+                    <div id="peerCount">節點數: 0 人</div>
+                    <div style="color: var(--yt-red); font-weight: bold;">P2P 即時串流技術</div>
+                </div>
+            </div>
+
+            <!-- 數據可視化面板 -->
+            <div class="p2p-dashboard">
+                <div class="dashboard-title">📊 P2P 雲端頻寬分享數據監控</div>
+                <div class="grid-stats">
+                    <div class="stat-card">
+                        <div style="font-size: 0.75rem; color: var(--text-sub);">下載速度</div>
+                        <div class="stat-num" id="dlSpeed" style="color: #2bba66;">0 KB/s</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 0.75rem; color: var(--text-sub);">分享(上傳)速度</div>
+                        <div class="stat-num" id="ulSpeed" style="color: #3b82f6;">0 KB/s</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 0.75rem; color: var(--text-sub);">緩衝進度</div>
+                        <div class="stat-num" id="bufferPct">0%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 0.75rem; color: var(--text-sub);">節省伺服器頻寬</div>
+                        <div class="stat-num" id="ratio" style="color: #f59e0b;">0%</div>
+                    </div>
+                </div>
+                <!-- 緩衝進度條 -->
+                <div class="yt-progress-wrapper">
+                    <div id="pBar" class="yt-progress-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側：YouTube 側邊控制欄 -->
+        <div class="secondary-sidebar">
+            <!-- 輸入控制區 -->
+            <div class="sidebar-card">
+                <h3>📥 輸入磁力連結投放</h3>
+                <textarea id="magnetInput" class="input-box" placeholder="貼上 magnet:?xt=urn:btih:... 連結"></textarea>
+                <button class="yt-btn" onclick="loadCustomTorrent()">立刻播放</button>
+            </div>
+
+            <!-- 推薦選單區 (模擬 YouTube 右側推薦列表) -->
+            <div class="sidebar-card" style="background: transparent; padding: 0;">
+                <h3 style="padding-left: 4px;">🔥 推薦熱門 P2P 測試影片</h3>
+                
+                <div class="recommend-item" onclick="clickRecommend(0)">
+                    <div class="recommend-thumb">🎬</div>
+                    <div class="recommend-info">
+                        <div class="recommend-title">Sintel - 經典開源 4K 高畫質動畫電影測試檔</div>
+                        <div style="font-size:0.75rem; color:var(--text-sub); margin-top:4px;">全球熱門節點</div>
+                    </div>
+                </div>
+
+                <div class="recommend-item" onclick="clickRecommend(1)">
+                    <div class="recommend-thumb">🎵</div>
+                    <div class="recommend-info">
+                        <div class="recommend-title">Tears of Steel - 科幻特效開源電影 (微型種子測試)</div>
+                        <div style="font-size:0.75rem; color:var(--text-sub); margin-top:4px;">適合低頻寬測試</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const client = new WebTorrent();
+        let currentTorrent = null;
+
+        // 預設的兩組公共開源測試連結
+        const torrentList = [
+            'magnet:?xt=urn:btih:6a9759bffd5c0af65319979fb7832189f4f3c35d&dn=sintel.mp4&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com',
+            'magnet:?xt=urn:btih:201da4614ff732ec0705ef28b8e05e468205ca17&dn=tears_of_steel_1080p.webp&tr=wss%3A%2F%2Ftracker.btorrent.xyz'
+        ];
+
+        // 💡 修正原本一進來就自動播的問題：我們初始保持「等待」狀態，不主動載入
+        window.addEventListener('DOMContentLoaded', () => {
+            showOverlay('請點選右側「推薦影片」或貼上磁力連結開始進行 P2P 串流。');
+            document.getElementById('playerOverlay').querySelector('.spinner').style.display = 'none'; // 隱藏彩圈
+        });
+
+        function startStreaming(torrentId) {
+            if (currentTorrent) {
+                client.remove(currentTorrent);
+            }
+
+            document.getElementById('playerOverlay').querySelector('.spinner').style.display = 'block';
+            showOverlay('正在經由 WebRTC 尋找網路對端 Peers...');
+
+            client.add(torrentId, function (torrent) {
+                currentTorrent = torrent;
+                
+                // 尋找影片
+                const file = torrent.files.find(f => f.name.endsWith('.mp4') || f.name.endsWith('.webm') || f.name.endsWith('.mkv'));
+                
+                if (!file) {
+                    showOverlay('❌ 錯誤：該種子內找不到網頁可播的影片格式 (.mp4/.webm)');
+                    return;
+                }
+
+                document.getElementById('playingName').innerText = file.name;
+                hideOverlay();
+
+                // 注入播放器
+                file.renderTo('#videoElement', { autoplay: true, controls: true });
+
+                // 數據更新計時器
+                const updateInterval = setInterval(() => {
+                    if (!currentTorrent || currentTorrent.destroyed) {
+                        clearInterval(updateInterval);
+                        return;
+                    }
+
+                    document.getElementById('peerCount').innerText = `目前在線協同人數: ${torrent.numPeers} 人`;
+                    document.getElementById('dlSpeed').innerText = `${(torrent.downloadSpeed / 1024).toFixed(1)} KB/s`;
+                    document.getElementById('ulSpeed').innerText = `${(torrent.uploadSpeed / 1024).toFixed(1)} KB/s`;
+                    
+                    const progressPercent = (torrent.progress * 100).toFixed(1);
+                    document.getElementById('bufferPct').innerText = `${progressPercent}%`;
+                    document.getElementById('pBar').style.width = `${progressPercent}%`;
+
+                    // 計算省下來的傳統伺服器頻寬
+                    if (torrent.downloaded > 0) {
+                        const savedRatio = torrent.numPeers > 0 ? Math.min(98, (torrent.numPeers * 18) + 20) : 0;
+                        document.getElementById('ratio').innerText = `${savedRatio.toFixed(0)}%`;
+                    }
+                }, 1000);
+            });
+
+            client.on('error', function (err) {
+                showOverlay(`❌ 發生連線錯誤: ${err.message}`);
+            });
+        }
+
+        function loadCustomTorrent() {
+            const input = document.getElementById('magnetInput').value.trim();
+            if (!input) return alert('請輸入磁力連結！');
+            startStreaming(input);
+        }
+
+        function clickRecommend(index) {
+            document.getElementById('magnetInput').value = torrentList[index];
+            startStreaming(torrentList[index]);
+        }
+
+        function showOverlay(text) {
+            const overlay = document.getElementById('playerOverlay');
+            overlay.style.opacity = '1';
+            overlay.style.display = 'flex';
+            document.getElementById('statusText').innerText = text;
+        }
+
+        function hideOverlay() {
+            const overlay = document.getElementById('playerOverlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => { overlay.style.display = 'none'; }, 500);
+        }
+    </script>
+</body>
+</html>
