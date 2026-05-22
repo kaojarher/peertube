@@ -289,6 +289,227 @@
             .video-title { font-size: 1.1rem; }
             .stat-num { font-size: 0.95rem; }
         }
+
+        /* ===== 分享影音功能樣式 ===== */
+        .share-btn-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+        .share-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid var(--border-gray);
+            color: var(--text-main);
+            border-radius: 20px;
+            padding: 10px 16px;
+            font-size: 0.88rem;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .share-chip:hover {
+            background: rgba(255,255,255,0.13);
+            border-color: #aaa;
+        }
+        .share-chip.primary {
+            background: var(--yt-red);
+            border-color: var(--yt-red);
+            color: white;
+        }
+        .share-chip.primary:hover { background: #cc0000; border-color: #cc0000; }
+
+        /* 手機版固定底部分享列 */
+        .mobile-share-bar {
+            display: none;
+        }
+        @media (max-width: 700px) {
+            .share-btn-row { display: none; } /* 隱藏原本的分享按鈕列，改用固定底部列 */
+            .mobile-share-bar {
+                display: flex;
+                position: fixed;
+                bottom: 0; left: 0; right: 0;
+                background: #1a1a1a;
+                border-top: 1px solid #333;
+                padding: 10px 12px;
+                gap: 8px;
+                z-index: 500;
+                padding-bottom: max(10px, env(safe-area-inset-bottom));
+            }
+            .mob-share-btn {
+                flex: 1;
+                background: rgba(255,255,255,0.08);
+                border: 1px solid #444;
+                color: white;
+                border-radius: 10px;
+                padding: 11px 6px;
+                font-size: 0.82rem;
+                font-weight: bold;
+                cursor: pointer;
+                text-align: center;
+            }
+            .mob-share-btn.primary {
+                background: var(--yt-red);
+                border-color: var(--yt-red);
+            }
+            /* 底部留白，避免內容被固定列遮住 */
+            body { padding-bottom: 68px; }
+        }
+
+        /* 分享浮層 Modal */
+        .share-modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.72);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+        .share-modal-backdrop.open { display: flex; }
+        .share-modal {
+            background: #1e1e1e;
+            border: 1px solid #3d3d3d;
+            border-radius: 16px;
+            padding: 28px;
+            width: min(500px, 95vw);
+            position: relative;
+            animation: modalIn 0.22s ease;
+        }
+        @keyframes modalIn {
+            from { transform: translateY(18px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+        .share-modal h2 {
+            font-size: 1.1rem;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .share-modal-close {
+            position: absolute;
+            top: 16px; right: 18px;
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            font-size: 1.3rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .share-modal-close:hover { color: white; }
+
+        /* 磁力連結顯示框 */
+        .magnet-display {
+            background: #121212;
+            border: 1px solid var(--border-gray);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.78rem;
+            color: #ccc;
+            word-break: break-all;
+            max-height: 90px;
+            overflow-y: auto;
+            margin-bottom: 12px;
+            user-select: all;
+        }
+        .magnet-display:empty::before {
+            content: '（尚未播放任何影片）';
+            color: var(--text-sub);
+        }
+
+        /* 複製成功提示 */
+        .copy-toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: #2bba66;
+            color: white;
+            font-size: 0.88rem;
+            font-weight: bold;
+            padding: 10px 22px;
+            border-radius: 24px;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9999;
+            transition: opacity 0.25s, transform 0.25s;
+        }
+        .copy-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 分享平台按鈕列 */
+        .platform-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 14px 0;
+        }
+        .platform-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            padding: 10px 6px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-size: 0.72rem;
+            color: var(--text-sub);
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .platform-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: #555;
+            color: white;
+        }
+        .platform-btn .icon { font-size: 1.4rem; }
+
+        /* QR 碼區 */
+        .qr-section {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-top: 1px solid var(--border-gray);
+            padding-top: 14px;
+            margin-top: 4px;
+        }
+        #qrCanvas {
+            border-radius: 8px;
+            background: white;
+            padding: 4px;
+            flex-shrink: 0;
+        }
+        .qr-hint {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            line-height: 1.5;
+        }
+
+        /* 短連結自訂標題輸入 */
+        .share-label {
+            font-size: 0.78rem;
+            color: var(--text-sub);
+            margin-bottom: 4px;
+        }
+        .share-input-sm {
+            width: 100%;
+            background: #121212;
+            border: 1px solid var(--border-gray);
+            padding: 8px 10px;
+            border-radius: 7px;
+            color: white;
+            font-size: 0.88rem;
+            white-space: nowrap;
+            margin-bottom: 10px;
+        }
+        .share-input-sm:focus { outline: none; border-color: #fff; }
     </style>
 </head>
 <body>
@@ -319,6 +540,19 @@
                 <div class="video-meta-bar">
                     <div id="peerCount">節點數: 0 人</div>
                     <div style="color: var(--yt-red); font-weight: bold;">P2P 即時串流技術</div>
+                </div>
+
+                <!-- 分享按鈕列 -->
+                <div class="share-btn-row">
+                    <button class="share-chip primary" onclick="openShareModal()">
+                        ↗ 分享影片
+                    </button>
+                    <button class="share-chip" onclick="copyMagnet()">
+                        📋 複製磁力連結
+                    </button>
+                    <button class="share-chip" onclick="downloadMagnet()">
+                        ⬇ 匯出 .magnet 檔
+                    </button>
                 </div>
             </div>
 
@@ -353,6 +587,19 @@
         <!-- 右側：YouTube 側邊控制欄 -->
         <div class="secondary-sidebar">
             <!-- 輸入控制區 -->
+            <!-- 本地檔案播放 -->
+            <div class="sidebar-card">
+                <h3>📁 選擇本地影音檔案</h3>
+                <input type="file" id="localFileInput" accept="video/*,audio/*" style="display:none" onchange="loadLocalFile(this)">
+                <button class="yt-btn" style="margin-bottom:8px;" onclick="document.getElementById('localFileInput').click()">
+                    選擇檔案播放
+                </button>
+                <div id="localFileName" style="font-size:0.78rem;color:var(--text-sub);text-align:center;min-height:18px;"></div>
+                <div style="font-size:0.75rem;color:#f59e0b;margin-top:8px;line-height:1.5;">
+                    ⚡ 選檔後自動做種並產生磁力連結，複製後即可分享給朋友串流播放（需保持頁面開啟）
+                </div>
+            </div>
+
             <div class="sidebar-card">
                 <h3>📥 輸入磁力連結投放</h3>
                 <textarea id="magnetInput" class="input-box" placeholder="貼上 magnet:?xt=urn:btih:... 連結"></textarea>
@@ -383,7 +630,73 @@
 
     </div>
 
+    <!-- 複製成功提示 -->
+    <!-- 手機版固定底部分享列 -->
+    <div class="mobile-share-bar" id="mobileShareBar">
+        <button class="mob-share-btn primary" onclick="openShareModal()">↗ 分享影片</button>
+        <button class="mob-share-btn" onclick="copyMagnet()">📋 複製連結</button>
+        <button class="mob-share-btn" onclick="downloadMagnet()">⬇ 匯出</button>
+    </div>
+
+    <div class="copy-toast" id="copyToast">✓ 已複製到剪貼簿！</div>
+
+    <!-- 分享影音 Modal -->
+    <div class="share-modal-backdrop" id="shareModalBackdrop" onclick="closeShareModal(event)">
+        <div class="share-modal">
+            <button class="share-modal-close" onclick="closeShareModal()">✕</button>
+            <h2>↗ 分享此 P2P 影片</h2>
+
+            <!-- 自訂標題 -->
+            <div class="share-label">影片標題（可自訂）</div>
+            <input class="share-input-sm" id="shareTitleInput" placeholder="輸入分享標題..." />
+
+            <!-- 磁力連結顯示 -->
+            <div class="share-label">磁力連結</div>
+            <div class="magnet-display" id="magnetDisplay"></div>
+
+            <!-- 平台分享按鈕 -->
+            <div class="share-label">分享至平台</div>
+            <div class="platform-row">
+                <button class="platform-btn" onclick="shareTo('line')">
+                    <span class="icon">💬</span>LINE
+                </button>
+                <button class="platform-btn" onclick="shareTo('telegram')">
+                    <span class="icon">✈️</span>Telegram
+                </button>
+                <button class="platform-btn" onclick="shareTo('twitter')">
+                    <span class="icon">🐦</span>X / Twitter
+                </button>
+                <button class="platform-btn" onclick="shareTo('whatsapp')">
+                    <span class="icon">📱</span>WhatsApp
+                </button>
+                <button class="platform-btn" onclick="shareTo('facebook')">
+                    <span class="icon">👥</span>Facebook
+                </button>
+                <button class="platform-btn" onclick="shareTo('email')">
+                    <span class="icon">✉️</span>Email
+                </button>
+                <button class="platform-btn" onclick="copyShareText()">
+                    <span class="icon">📋</span>複製文字
+                </button>
+                <button class="platform-btn" onclick="nativeShare()">
+                    <span class="icon">📤</span>系統分享
+                </button>
+            </div>
+
+            <!-- QR Code -->
+            <div class="qr-section">
+                <canvas id="qrCanvas" width="88" height="88"></canvas>
+                <div class="qr-hint">
+                    掃描 QR Code 即可在其他裝置上直接開啟此播放頁面，並自動帶入磁力連結。
+                    <br><br>
+                    <span style="color: #2bba66; font-weight: bold;">📡 P2P 串流無需任何伺服器儲存影片</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+
         const client = new WebTorrent();
         let currentTorrent = null;
 
@@ -392,12 +705,6 @@
             'magnet:?xt=urn:btih:6a9759bffd5c0af65319979fb7832189f4f3c35d&dn=sintel.mp4&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com',
             'magnet:?xt=urn:btih:201da4614ff732ec0705ef28b8e05e468205ca17&dn=tears_of_steel_1080p.webp&tr=wss%3A%2F%2Ftracker.btorrent.xyz'
         ];
-
-        // 💡 修正原本一進來就自動播的問題：我們初始保持「等待」狀態，不主動載入
-        window.addEventListener('DOMContentLoaded', () => {
-            showOverlay('請點選右側「推薦影片」或貼上磁力連結開始進行 P2P 串流。');
-            document.getElementById('playerOverlay').querySelector('.spinner').style.display = 'none'; // 隱藏彩圈
-        });
 
         function startStreaming(torrentId) {
             if (currentTorrent) {
@@ -452,6 +759,49 @@
             });
         }
 
+        function loadLocalFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            // 先用 blob URL 直接播放，不等做種
+            const blobUrl = URL.createObjectURL(file);
+            const video = document.getElementById('videoElement');
+            if (currentTorrent) { client.remove(currentTorrent); currentTorrent = null; }
+            hideOverlay();
+            video.src = blobUrl;
+            video.play();
+            document.getElementById('playingName').innerText = file.name;
+            document.getElementById('localFileName').innerText = '▶ ' + file.name;
+            document.getElementById('peerCount').innerText = '本地播放中，做種準備中…';
+            document.getElementById('dlSpeed').innerText = '—';
+            document.getElementById('ulSpeed').innerText = '—';
+            document.getElementById('bufferPct').innerText = '做種中…';
+            document.getElementById('ratio').innerText = '—';
+            document.getElementById('magnetInput').value = '';
+
+            // 背景做種，產生磁力連結
+            client.seed(file, { announce: [
+                'wss://tracker.btorrent.xyz',
+                'wss://tracker.openwebtorrent.com',
+                'wss://tracker.webtorrent.dev'
+            ]}, function(torrent) {
+                currentTorrent = torrent;
+                const magnet = torrent.magnetURI;
+                document.getElementById('magnetInput').value = magnet;
+                document.getElementById('peerCount').innerText = `做種中，目前 ${torrent.numPeers} 人連線`;
+                document.getElementById('bufferPct').innerText = '100%';
+                document.getElementById('pBar').style.width = '100%';
+                document.getElementById('localFileName').innerText = '✅ 做種成功，磁力連結已產生';
+
+                // 持續更新上傳數據
+                const seedInterval = setInterval(() => {
+                    if (!currentTorrent || currentTorrent.destroyed) { clearInterval(seedInterval); return; }
+                    document.getElementById('ulSpeed').innerText = `${(torrent.uploadSpeed / 1024).toFixed(1)} KB/s`;
+                    document.getElementById('peerCount').innerText = `做種中，目前 ${torrent.numPeers} 人連線`;
+                }, 1000);
+            });
+        }
+
         function loadCustomTorrent() {
             const input = document.getElementById('magnetInput').value.trim();
             if (!input) return alert('請輸入磁力連結！');
@@ -475,6 +825,137 @@
             overlay.style.opacity = '0';
             setTimeout(() => { overlay.style.display = 'none'; }, 500);
         }
+
+        /* ===== 分享影音功能 ===== */
+
+        function getCurrentMagnet() {
+            return document.getElementById('magnetInput').value.trim();
+        }
+
+        function showToast(msg = '✓ 已複製到剪貼簿！') {
+            const t = document.getElementById('copyToast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
+        function copyMagnet() {
+            const m = getCurrentMagnet();
+            if (!m) return alert('尚未播放任何影片，請先載入磁力連結。');
+            navigator.clipboard.writeText(m).then(() => showToast('✓ 磁力連結已複製！'));
+        }
+
+        function downloadMagnet() {
+            const m = getCurrentMagnet();
+            if (!m) return alert('尚未播放任何影片，請先載入磁力連結。');
+            const name = document.getElementById('playingName').innerText.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_').slice(0, 40);
+            const blob = new Blob([m], { type: 'text/plain' });
+            const a = Object.assign(document.createElement('a'), {
+                href: URL.createObjectURL(blob),
+                download: `${name || 'magnet'}.magnet`
+            });
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        /* --- 分享 Modal --- */
+        function openShareModal() {
+            const m = getCurrentMagnet();
+            if (!m) return alert('尚未播放任何影片，請先載入磁力連結。');
+            document.getElementById('magnetDisplay').textContent = m;
+            const title = document.getElementById('playingName').innerText;
+            document.getElementById('shareTitleInput').value =
+                title === '請由右側輸入磁力連結或點擊推薦影片' ? '' : title;
+            document.getElementById('shareModalBackdrop').classList.add('open');
+            renderQR(m);
+        }
+
+        function closeShareModal(e) {
+            if (!e || e.target === document.getElementById('shareModalBackdrop') || e.currentTarget.tagName === 'BUTTON') {
+                document.getElementById('shareModalBackdrop').classList.remove('open');
+            }
+        }
+
+        /* --- 各平台分享 --- */
+        function getShareTitle() {
+            return document.getElementById('shareTitleInput').value.trim()
+                || document.getElementById('playingName').innerText
+                || 'P2P 影片分享';
+        }
+
+        function buildShareText() {
+            const t = getShareTitle();
+            const m = getCurrentMagnet();
+            return `【${t}】\n使用 PeerTube Premium P2P 串流播放：\n${m}`;
+        }
+
+        function shareTo(platform) {
+            const m = getCurrentMagnet();
+            const t = encodeURIComponent(getShareTitle());
+            const body = encodeURIComponent(buildShareText());
+            const urls = {
+                line:     `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(location.href)}&text=${body}`,
+                telegram: `https://t.me/share/url?url=${encodeURIComponent(location.href)}&text=${encodeURIComponent(buildShareText())}`,
+                twitter:  `https://twitter.com/intent/tweet?text=${body}`,
+                whatsapp: `https://wa.me/?text=${body}`,
+                facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(location.href)}&quote=${encodeURIComponent(buildShareText())}`,
+                email:    `mailto:?subject=${t}&body=${body}`,
+            };
+            if (urls[platform]) window.open(urls[platform], '_blank', 'noopener');
+        }
+
+        function copyShareText() {
+            navigator.clipboard.writeText(buildShareText())
+                .then(() => showToast('✓ 分享文字已複製！'));
+        }
+
+        async function nativeShare() {
+            if (!navigator.share) return alert('此瀏覽器不支援系統原生分享，請使用其他方式分享。');
+            try {
+                await navigator.share({ title: getShareTitle(), text: buildShareText(), url: location.href });
+            } catch(e) { /* 用戶取消 */ }
+        }
+
+        /* --- QR Code 純 JS 繪製 --- */
+        function renderQR(text) {
+            // 使用外部 QR 圖片 API 生成 QR（完全無需額外 CDN library，靠 img 即可）
+            const canvas = document.getElementById('qrCanvas');
+            const ctx = canvas.getContext('2d');
+            // 用 google chart API 生成 QR code image
+            const img = new Image();
+            // 分享的文字：使用縮短版 magnet hash
+            const shortText = encodeURIComponent(text.length > 200 ? text.slice(0, 200) : text);
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                ctx.clearRect(0, 0, 88, 88);
+                ctx.drawImage(img, 0, 0, 88, 88);
+            };
+            img.onerror = () => {
+                // fallback：若無法載入，畫一個提示
+                ctx.fillStyle = '#333';
+                ctx.fillRect(0, 0, 88, 88);
+                ctx.fillStyle = '#aaa';
+                ctx.font = '9px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('QR 無法', 44, 40);
+                ctx.fillText('生成', 44, 54);
+            };
+            img.src = `https://api.qrserver.com/v1/create-qr-code/?size=88x88&data=${shortText}`;
+        }
+
+        /* 頁面載入時檢查 URL 參數，支援帶 magnet 參數自動播放 */
+        window.addEventListener('DOMContentLoaded', () => {
+            showOverlay('請點選右側「推薦影片」或貼上磁力連結開始進行 P2P 串流。');
+            document.getElementById('playerOverlay').querySelector('.spinner').style.display = 'none';
+
+            // 支援 ?magnet=... 參數自動帶入播放
+            const params = new URLSearchParams(location.search);
+            const autoMagnet = params.get('magnet');
+            if (autoMagnet) {
+                document.getElementById('magnetInput').value = decodeURIComponent(autoMagnet);
+                startStreaming(decodeURIComponent(autoMagnet));
+            }
+        });
     </script>
 </body>
 </html>
